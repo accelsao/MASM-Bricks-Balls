@@ -13,8 +13,14 @@ main EQU start@0
 	Game_Mode db 6
 	Game_End_Msg db '< Game End >',0
 	Game_Score_Msg db 'Score: ',0
-
+	Game_Best_Score_Msg db 'Best Score: ',0
+	Header_Msg db '--      Welcome to <Threes>  1+2=3 3+3=6 6+6=12 .... Control_Mode: WASD      --',0
+	H_Line db '         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~             ',0
+	U_Line db '               -----------------------------------------------',0
+	W_Line db '              |           |           |           |           |',0 
+	Space_Line db '   |',0
 	
+	Top_Score db 0
 .code
 
 Init PROC
@@ -58,6 +64,15 @@ Count_digit ENDP
 Display_Board PROC,
 	mode: byte
 	
+	mov edx,offset Header_Msg
+    call WriteString
+	call crlf
+	call crlf
+	mov edx,offset H_Line
+    call WriteString
+	call crlf
+	
+	
 	movzx ecx,mode ;playmode 4, debugmode 6
 	.if mode==4
 		mov esi,offset Board+12+2
@@ -68,19 +83,51 @@ Display_Board PROC,
 	
 L3:
 	push ecx
-
 	movzx ecx,mode
 	
+	mov edx,offset U_Line
+    call WriteString
+	call crlf
+	
+	mov edx,offset W_Line
+    call WriteString
+	call crlf
+    call WriteString
+	call crlf
+	
+	push ecx 	
+	mov ecx,9
+	mov al,' '
+Spc3:
+	call writechar
+	loop Spc3
+	pop ecx
+	
 L4:	
-	;Output number;
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	mov ax,[esi]
 	movzx eax,ax
 	
 	;;; set ecx for space
 	push ecx
+	push eax
+	
+	mov ecx,5
+	mov al,' '
+Spc2:
+	call WriteChar
+	loop Spc2
+	
+	; | space_num space *4 |
+	
+	mov al,'|'
+	call writechar
+	
+	
+	pop eax
 	call Count_digit
 	mov ebx,eax
+	
+	call Count_digit
 	mov al,' '
 L5:
 	call WriteChar
@@ -88,23 +135,38 @@ L5:
 	mov eax,ebx
 	call writedec
 	
+	
 	pop ecx
 	add esi,2 ; word=2 byte
 	
-	
-	
-	
 	loop L4	
+	mov ecx , 5
+	mov al , ' '
+L6:
+	call WriteChar
+	Loop L6
+	mov al , '|'
+	call writechar
 	
 	.if mode==4
 		add esi,4 ; 右移2格
 	.endif
 	
 	pop ecx 
-	
-	
 	call crlf
-	loop L3
+	mov edx,offset W_Line
+    call WriteString
+	call crlf
+    call WriteString
+	call crlf
+	
+	DEC ECX
+	CMP ECX,0
+	JNE L3
+	
+	mov edx,offset U_Line
+    call WriteString
+	call crlf
 	
 	ret
 Display_Board ENDP
@@ -700,10 +762,9 @@ L4:
 	call WaitMsg
 	call New_Game
 	
+	
 	ret
-	;invoke ExitProcess, 0
-	
-	
+
 Continue:
 	pop ecx
 	ret
@@ -733,6 +794,20 @@ L2:
 	loop L1
 	pop ecx
 	call writedec
+	
+	call crlf
+	mov  edx,OFFSET Game_Best_Score_Msg
+    call WriteString
+	mov esi,offset Top_Score
+	mov ebx,[esi]
+	.if eax>ebx
+		mov ebx,eax
+	.endif
+	
+	mov [esi],ebx
+	mov eax,ebx
+	call writedec
+	call crlf
 	pop eax
 	ret
 Calc_Score ENDP
@@ -747,8 +822,6 @@ New_Game PROC
 New_Game ENDP
 
 main PROC
-	
-	
 	
 	mov Game_Mode,4
 	call New_Game
@@ -838,14 +911,11 @@ END main
 
 comment @
 
-	http://programming.msjc.edu/asm/help/index.html
-
-	小黑框的排版 加有的沒的
-	1. Rule
-	2. 拉大版面
-	3. 顏色
-	4. 不知道
 
 @
+
+
+
+
 
 
